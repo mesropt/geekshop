@@ -6,7 +6,9 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("mainapp", "0001_initial")]
+    dependencies = [
+        ("mainapp", "0001_initial"),
+    ]
 
     operations = [
         migrations.CreateModel(
@@ -24,5 +26,5 @@ class Migration(migrations.Migration):
                     models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="mainapp.productcategory"),
                 ),
             ],
-        )
+        ),
     ]

@@ -5,7 +5,9 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("mainapp", "0002_product")]
+    dependencies = [
+        ("mainapp", "0002_product"),
+    ]
 
     operations = [
         migrations.CreateModel(
@@ -17,5 +19,5 @@ class Migration(migrations.Migration):
                 ("city", models.CharField(default="Москва", max_length=128, verbose_name="город")),
                 ("address", models.CharField(max_length=254, verbose_name="адресс")),
             ],
-        )
+        ),
     ]
