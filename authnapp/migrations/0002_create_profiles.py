@@ -5,9 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('authnapp', '0001_user_profile'),
-    ]
+    dependencies = [("authnapp", "0001_user_profile")]
 
-    operations = [
-    ]
+    operations = []
