@@ -1,184 +1,111 @@
 from django.conf import settings
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import HttpResponseRedirect, get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
-from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django.views.generic.list import ListView
+from django.contrib import auth
+from django.core.mail import send_mail
+from django.db import transaction
+from django.shortcuts import HttpResponseRedirect, render
+from django.urls import reverse
 
-from adminapp.forms import ProductCategoryEditForm, ProductEditForm, ShopUserAdminEditForm
-from authnapp.forms import ShopUserRegisterForm
+from authnapp.forms import ShopUserEditForm, ShopUserLoginForm, ShopUserProfileEditForm, ShopUserRegisterForm
 from authnapp.models import ShopUser
-from mainapp.models import Product, ProductCategory
 
 
-@user_passes_test(lambda u: u.is_superuser)
-def admin_main(request):
-    response = redirect("admin:users")
-    return response
+def login(request):
+    title = "вход"
+
+    login_form = ShopUserLoginForm(data=request.POST or None)
+    next_page = request.GET["next"] if "next" in request.GET.keys() else ""
+
+    if request.method == "POST" and login_form.is_valid():
+        username = request.POST["username"]
+        password = request.POST["password"]
+
+        user = auth.authenticate(username=username, password=password)
+        if user and user.is_active:
+            auth.login(request, user)
+            if "next_page" in request.POST.keys():
+                return HttpResponseRedirect(request.POST["next_page"])
+            return HttpResponseRedirect(reverse("main"))
+
+    content = {"title": title, "login_form": login_form, "next_page": next_page}
+    return render(request, "authnapp/login.html", content)
 
 
-class UsersListView(LoginRequiredMixin, ListView):
-    model = ShopUser
-    template_name = "adminapp/users.html"
+def logout(request):
+    auth.logout(request)
+    return HttpResponseRedirect(reverse("main"))
 
 
-@user_passes_test(lambda u: u.is_superuser)
-def user_create(request):
-    title = "пользователи/создание"
+def register(request):
+    title = "регистрация"
 
     if request.method == "POST":
-        user_form = ShopUserRegisterForm(request.POST, request.FILES)
-        if user_form.is_valid():
-            user_form.save()
-            return HttpResponseRedirect(reverse("admin:users"))
+        register_form = ShopUserRegisterForm(request.POST, request.FILES)
+
+        if register_form.is_valid():
+            user = register_form.save()
+            if send_verify_mail(user):
+                print("сообщение для подтверждения регистрации отправлено")
+                return HttpResponseRedirect(reverse("auth:login"))
+            print("ошибка отправки сообщения для подтверждения регистрации")
+            return HttpResponseRedirect(reverse("auth:login"))
     else:
-        user_form = ShopUserRegisterForm()
+        register_form = ShopUserRegisterForm()
 
-    content = {"title": title, "update_form": user_form, "media_url": settings.MEDIA_URL}
+    content = {"title": title, "register_form": register_form}
+    return render(request, "authnapp/register.html", content)
 
-    return render(request, "adminapp/user_update.html", content)
 
+@transaction.atomic
+def edit(request):
+    title = "редактирование"
 
-@user_passes_test(lambda u: u.is_superuser)
-def user_update(request, pk):
-    title = "пользователи/редактирование"
-
-    edit_user = get_object_or_404(ShopUser, pk=pk)
     if request.method == "POST":
-        edit_form = ShopUserAdminEditForm(request.POST, request.FILES, instance=edit_user)
-        if edit_form.is_valid():
+        edit_form = ShopUserEditForm(request.POST, request.FILES, instance=request.user)
+        profile_form = ShopUserProfileEditForm(request.POST, instance=request.user.shopuserprofile)
+        if edit_form.is_valid() and profile_form.is_valid():
             edit_form.save()
-            return HttpResponseRedirect(reverse("admin:user_update", args=[edit_user.pk]))
+            return HttpResponseRedirect(reverse("auth:edit"))
     else:
-        edit_form = ShopUserAdminEditForm(instance=edit_user)
+        edit_form = ShopUserEditForm(instance=request.user)
+        profile_form = ShopUserProfileEditForm(instance=request.user.shopuserprofile)
 
-    content = {"title": title, "update_form": edit_form, "media_url": settings.MEDIA_URL}
+    content = {"title": title, "edit_form": edit_form, "profile_form": profile_form, "media_url": settings.MEDIA_URL}
 
-    return render(request, "adminapp/user_update.html", content)
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def user_delete(request, pk):
-    title = "пользователи/удаление"
-
-    user = get_object_or_404(ShopUser, pk=pk)
-
-    if request.method == "POST":
-        # user.delete()
-        # Instead delete we will set users inactive
-        user.is_active = False
-        user.save()
-        return HttpResponseRedirect(reverse("admin:users"))
-
-    content = {"title": title, "user_to_delete": user, "media_url": settings.MEDIA_URL}
-
-    return render(request, "adminapp/user_delete.html", content)
+    return render(request, "authnapp/edit.html", content)
 
 
-@user_passes_test(lambda u: u.is_superuser)
-def categories(request):
-    title = "админка/категории"
-    categories_list = ProductCategory.objects.all()
-    content = {"title": title, "objects": categories_list, "media_url": settings.MEDIA_URL}
-    return render(request, "adminapp/categories.html", content)
+def send_verify_mail(user):
+    verify_link = reverse("auth:verify", args=[user.email, user.activation_key])
+
+    title = f"Подтверждение учетной записи {user.username}"
+    message = f"Для подтверждения учетной записи {user.username} \
+    на портале {settings.DOMAIN_NAME} перейдите по ссылке: \
+    \n{settings.DOMAIN_NAME}{verify_link}"
+
+    print(f"from: {settings.EMAIL_HOST_USER}, to: {user.email}")
+    return send_mail(
+        title,
+        message,
+        settings.EMAIL_HOST_USER,
+        [user.email],
+        fail_silently=False,
+    )
 
 
-class ProductCategoryCreateView(LoginRequiredMixin, CreateView):
-    model = ProductCategory
-    template_name = "adminapp/category_update.html"
-    success_url = reverse_lazy("admin:categories")
-    fields = "__all__"
+def verify(request, email, activation_key):
+    try:
+        user = ShopUser.objects.get(email=email)
+        if user.activation_key == activation_key and not user.is_activation_key_expired():
+            print(f"user {user} is activated")
+            user.is_active = True
+            user.save()
+            auth.login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
+            return render(request, "authnapp/verification.html")
+        print(f"error activation user: {user}")
+        return render(request, "authnapp/verification.html")
 
-class ProductCategoryUpdateView(LoginRequiredMixin, UpdateView):
-    model = ProductCategory
-    template_name = "adminapp/category_update.html"
-    success_url = reverse_lazy("admin:categories")
-    fields = "__all__"
+    except Exception as e:
+        print(f"error activation user : {e.args}")
 
-    def get_context_data(self, **kwargs):
-        context = super(ProductCategoryUpdateView, self).get_context_data(**kwargs)
-        context["title"] = "категории/редактирование"
-        return context
-
-
-class ProductCategoryDeleteView(LoginRequiredMixin, DeleteView):
-    model = ProductCategory
-    template_name = "adminapp/category_delete.html"
-    success_url = reverse_lazy("admin:categories")
-
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.object.is_active = False
-        self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def products(request, pk):
-    title = "админка/продукт"
-    category = get_object_or_404(ProductCategory, pk=pk)
-    products_list = Product.objects.filter(category__pk=pk).order_by("name")
-    content = {"title": title, "category": category, "objects": products_list, "media_url": settings.MEDIA_URL}
-    return render(request, "adminapp/products.html", content)
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def product_create(request, pk):
-    title = "продукт/создание"
-    category = get_object_or_404(ProductCategory, pk=pk)
-
-    if request.method == "POST":
-        product_form = ProductEditForm(request.POST, request.FILES)
-        if product_form.is_valid():
-            product_form.save()
-            return HttpResponseRedirect(reverse("admin:products", args=[pk]))
-    else:
-        # set initial value for form
-        product_form = ProductEditForm(initial={"category": category})
-
-    content = {"title": title, "update_form": product_form, "category": category, "media_url": settings.MEDIA_URL}
-    return render(request, "adminapp/product_update.html", content)
-
-
-class ProductDetailView(LoginRequiredMixin, DetailView):
-    model = Product
-    template_name = "adminapp/product_read.html"
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def product_update(request, pk):
-    title = "продукт/редактирование"
-    edit_product = get_object_or_404(Product, pk=pk)
-
-    if request.method == "POST":
-        edit_form = ProductEditForm(request.POST, request.FILES, instance=edit_product)
-        if edit_form.is_valid():
-            edit_form.save()
-            return HttpResponseRedirect(reverse("admin:product_update", args=[edit_product.pk]))
-    else:
-        edit_form = ProductEditForm(instance=edit_product)
-
-    content = {
-        "title": title,
-        "update_form": edit_form,
-        "category": edit_product.category,
-        "media_url": settings.MEDIA_URL,
-    }
-    return render(request, "adminapp/product_update.html", content)
-
-
-@user_passes_test(lambda u: u.is_superuser)
-def product_delete(request, pk):
-    title = "продукт/удаление"
-    product = get_object_or_404(Product, pk=pk)
-
-    if request.method == "POST":
-        product.is_active = False
-        product.save()
-        return HttpResponseRedirect(reverse("admin:products", args=[product.category.pk]))
-
-    content = {"title": title, "product_to_delete": product, "media_url": settings.MEDIA_URL}
-    return render(request, "adminapp/product_delete.html", content)
+    return HttpResponseRedirect(reverse("main"))
