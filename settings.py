@@ -21,9 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = (
-    "django-insecure-$5rw9di_jqhuscpkyxi4^zsou&-r=nu=!5v+_ik0arwgo$az3#"
-)
+SECRET_KEY = "django-insecure-$5rw9di_jqhuscpkyxi4^zsou&-r=nu=!5v+_ik0arwgo$az3#"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -73,9 +71,9 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "mainapp.context_processors.basket",
-            ],
+            ]
         },
-    },
+    }
 ]
 
 WSGI_APPLICATION = "geekshop.wsgi.application"
@@ -84,12 +82,7 @@ WSGI_APPLICATION = "geekshop.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
 
 
 # Password validation
@@ -97,18 +90,10 @@ DATABASES = {
 
 if not DEBUG:
     AUTH_PASSWORD_VALIDATORS = [
-        {
-            "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-        },
-        {
-            "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        },
-        {
-            "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-        },
-        {
-            "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-        },
+        {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+        {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+        {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+        {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
     ]
 else:
     # Set simple password for debug
