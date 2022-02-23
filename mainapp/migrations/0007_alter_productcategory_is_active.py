@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('mainapp', '0006_product_is_active'),
-    ]
+    dependencies = [("mainapp", "0006_product_is_active")]
 
     operations = [
         migrations.AlterField(
-            model_name='productcategory',
-            name='is_active',
-            field=models.BooleanField(db_index=True, default=True, verbose_name='категория активна'),
-        ),
+            model_name="productcategory",
+            name="is_active",
+            field=models.BooleanField(db_index=True, default=True, verbose_name="категория активна"),
+        )
     ]

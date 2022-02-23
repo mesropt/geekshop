@@ -7,14 +7,15 @@ from django.utils.timezone import utc
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('authnapp', '0002_alter_shopuser_activation_key_expires'),
-    ]
+    dependencies = [("authnapp", "0002_alter_shopuser_activation_key_expires")]
 
     operations = [
         migrations.AlterField(
-            model_name='shopuser',
-            name='activation_key_expires',
-            field=models.DateTimeField(default=datetime.datetime(2022, 2, 25, 14, 55, 19, 124816, tzinfo=utc), verbose_name='актуальность ключа'),
-        ),
+            model_name="shopuser",
+            name="activation_key_expires",
+            field=models.DateTimeField(
+                default=datetime.datetime(2022, 2, 25, 14, 55, 19, 124816, tzinfo=utc),
+                verbose_name="актуальность ключа",
+            ),
+        )
     ]
