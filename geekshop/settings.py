@@ -1,37 +1,22 @@
 import os
-from pathlib import (
-    Path,
-)
+from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = (
-    Path(
-        __file__
-    )
-    .resolve()
-    .parent.parent
-)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-$5rw9di_jqhuscpkyxi4^zsou&-r=nu=!5v+_ik0arwgo$az3#"
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (
-    False
-    if os.getenv(
-        "DJANGO_PRODUCTION",
-        default=None,
-    )
-    else True
+SECRET_KEY = (
+    "django-insecure-$5rw9di_jqhuscpkyxi4^zsou&-r=nu=!5v+_ik0arwgo$az3#"
 )
 
-ALLOWED_HOSTS = [
-    "*"
-]
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False if os.getenv("DJANGO_PRODUCTION", default=None) else True
+
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -97,10 +82,7 @@ if DEBUG:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.path.join(
-                BASE_DIR,
-                "db.sqlite3",
-            ),
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
         }
     }
 else:
@@ -118,9 +100,7 @@ else:
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
-if (
-    not DEBUG
-):
+if not DEBUG:
     AUTH_PASSWORD_VALIDATORS = [
         {
             "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
@@ -137,9 +117,7 @@ if (
     ]
 else:
     # Set simple password for debug
-    AUTH_PASSWORD_VALIDATORS = (
-        []
-    )
+    AUTH_PASSWORD_VALIDATORS = []
 
 
 # Internationalization
@@ -163,25 +141,14 @@ STATIC_URL = "/static/"
 
 # In common case STATIC_ROOT can not be in STATICFILES_DIRS
 if DEBUG:
-    STATICFILES_DIRS = (
-        os.path.join(
-            BASE_DIR,
-            "static",
-        ),
-    )
+    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 else:
-    STATIC_ROOT = os.path.join(
-        BASE_DIR,
-        "static",
-    )
+    STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Media files
 MEDIA_URL = "/media/"
 
-MEDIA_ROOT = os.path.join(
-    BASE_DIR,
-    "media",
-)
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Set login path:
 #   https://docs.djangoproject.com/en/3.2/ref/settings/#login-url
@@ -219,21 +186,44 @@ AUTHENTICATION_BACKENDS = (
 import json
 
 with open(
-    os.path.join(
-        BASE_DIR,
-        "tmp",
-        "secrets",
-        "github.json",
-    ),
-    "r",
+    os.path.join(BASE_DIR, "tmp", "secrets", "github.json"), "r"
 ) as secrets:
-    github_auth = json.load(
-        secrets
-    )
+    github_auth = json.load(secrets)
 
-SOCIAL_AUTH_GITHUB_KEY = github_auth[
-    "client_id"
-]
-SOCIAL_AUTH_GITHUB_SECRET = github_auth[
-    "client_secret"
-]
+SOCIAL_AUTH_GITHUB_KEY = github_auth["client_id"]
+SOCIAL_AUTH_GITHUB_SECRET = github_auth["client_secret"]
+
+# Django Debug Toolbar --->
+if DEBUG:
+    INSTALLED_APPS.extend(["debug_toolbar", "template_profiler_panel"])
+
+
+if DEBUG:
+    MIDDLEWARE.extend(["debug_toolbar.middleware.DebugToolbarMiddleware"])
+
+# Debgu tool bar settings
+if DEBUG:
+
+    def show_toolbar(request):
+        return True
+
+    DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": show_toolbar}
+
+    DEBUG_TOOLBAR_PANELS = [
+        # "ddt_request_history.panels.request_history.RequestHistoryPanel",
+        "debug_toolbar.panels.versions.VersionsPanel",
+        "debug_toolbar.panels.timer.TimerPanel",
+        "debug_toolbar.panels.settings.SettingsPanel",
+        "debug_toolbar.panels.headers.HeadersPanel",
+        "debug_toolbar.panels.request.RequestPanel",
+        "debug_toolbar.panels.sql.SQLPanel",
+        "debug_toolbar.panels.templates.TemplatesPanel",
+        "debug_toolbar.panels.staticfiles.StaticFilesPanel",
+        "debug_toolbar.panels.cache.CachePanel",
+        "debug_toolbar.panels.signals.SignalsPanel",
+        "debug_toolbar.panels.logging.LoggingPanel",
+        "debug_toolbar.panels.redirects.RedirectsPanel",
+        "debug_toolbar.panels.profiling.ProfilingPanel",
+        "template_profiler_panel.panels.template.TemplateProfilerPanel",
+    ]
+# <--- Django Debug Toolbar
