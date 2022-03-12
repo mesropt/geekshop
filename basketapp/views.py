@@ -4,6 +4,8 @@ from django.http import JsonResponse
 from django.shortcuts import HttpResponseRedirect, get_object_or_404, render
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.db import connection
+from django.db.models import F
 
 from basketapp.models import Basket
 from mainapp.models import Product
