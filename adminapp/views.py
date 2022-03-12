@@ -9,6 +9,7 @@ from django.views.generic.list import ListView
 from django.db import connection
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.db.models import F
 
 from adminapp.forms import ProductCategoryEditForm, ProductEditForm, ShopUserAdminEditForm
 from authnapp.forms import ShopUserRegisterForm
@@ -113,9 +114,9 @@ class ProductCategoryUpdateView(LoginRequiredMixin, UpdateView):
         if "discount" in form.cleaned_data:
             discount = form.cleaned_data["discount"]
             if discount:
-                # print(f"применяется скидка {discount}% к товарам категории {self.object.name}")
+                print(f"применяется скидка {discount}% к товарам категории {self.object.name}")
                 self.object.product_set.update(price=F("price") * (1 - discount / 100))
-                # db_profile_by_type(self.__class__, "UPDATE", connection.queries)
+                db_profile_by_type(self.__class__, "UPDATE", connection.queries)
 
         return super().form_valid(form)
 
