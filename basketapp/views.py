@@ -4,6 +4,8 @@ from django.http import JsonResponse
 from django.shortcuts import HttpResponseRedirect, get_object_or_404, render
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.db import connection
+from django.db.models import F
 
 from basketapp.models import Basket
 from mainapp.models import Product
@@ -17,6 +19,10 @@ def basket(request):
     return render(request, "basketapp/basket.html", content)
 
 
+from django.db import connection
+from django.db.models import F
+
+
 @login_required
 def basket_add(request, pk):
     if "login" in request.META.get("HTTP_REFERER"):
@@ -26,9 +32,14 @@ def basket_add(request, pk):
 
     if not basket:
         basket = Basket(user=request.user, product=product)
+        basket.quantity += 1
+    else:
+        basket.quantity = F("quantity") + 1
 
-    basket.quantity += 1
     basket.save()
+
+    update_queries = list(filter(lambda x: "UPDATE" in x["sql"], connection.queries))
+    print(f"query basket_add: {update_queries}")
 
     return HttpResponseRedirect(request.META.get("HTTP_REFERER"))
 
