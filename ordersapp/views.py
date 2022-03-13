@@ -7,10 +7,7 @@ from django.shortcuts import HttpResponseRedirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from django.views.generic.detail import DetailView
-from django.db.models import F
-from django.http import JsonResponse
 
-from mainapp.models import Product
 from basketapp.models import Basket
 from ordersapp.forms import OrderItemForm
 from ordersapp.models import Order, OrderItem
@@ -128,6 +125,9 @@ def order_forming_complete(request, pk):
     return HttpResponseRedirect(reverse("ordersapp:orders_list"))
 
 
+from django.db.models import F
+
+
 @receiver(pre_save, sender=OrderItem)
 @receiver(pre_save, sender=Basket)
 def product_quantity_update_save(instance, sender, **kwargs):
@@ -143,6 +143,11 @@ def product_quantity_update_save(instance, sender, **kwargs):
 def product_quantity_update_delete(instance, **kwargs):
     instance.product.quantity = F("quantity") + instance.quantity
     instance.product.save()
+
+
+from django.http import JsonResponse
+
+from mainapp.models import Product
 
 
 def get_product_price(request, pk):
